@@ -223,6 +223,7 @@ class ContentRequest:
     """Peticion de contenido derivada de una URL de Vimeus."""
 
     kind: str = "movie"  # movie | serie | anime | episode | unknown
+    endpoint: str = ""  # segmento de ruta original (movie/serie/anime/episode)
     tmdb_id: int | None = None
     imdb_id: str = ""
     season: int | None = None
@@ -231,7 +232,18 @@ class ContentRequest:
     source_url: str = ""
     origin: str = "url"  # url | iframe
 
+    @property
+    def is_episode(self) -> bool:
+        """Indica si la peticion corresponde a un episodio concreto."""
+
+        return self.episode is not None or self.kind == "episode"
+
     def describe_kind(self) -> str:
+        if self.kind in ("serie", "anime") and self.is_episode:
+            base = "Serie" if self.kind == "serie" else "Anime"
+            if self.season is not None and self.episode is not None:
+                return f"{base} (Temporada {self.season}, Episodio {self.episode})"
+            return f"{base} (Episodio)"
         return {
             "movie": "Pelicula",
             "serie": "Serie",

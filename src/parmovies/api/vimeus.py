@@ -155,8 +155,13 @@ class VimeusClient:
         headers: dict[str, str] = {"Accept": "text/html,application/xhtml+xml"}
         if referer:
             headers["Referer"] = referer
+        return self.fetch_text(url, headers=headers)
+
+    def fetch_text(self, url: str, *, headers: dict[str, str] | None = None) -> str:
+        """Descarga el contenido de texto de una URL (HTML, m3u8, VTT, JSON)."""
+
         try:
-            response = self._client.get(url, headers=headers)
+            response = self._client.get(url, headers=headers or {})
         except httpx.HTTPError as exc:
             raise VimeusNetworkError(f"No se pudo obtener {url}: {exc}") from exc
         if response.status_code >= 400:

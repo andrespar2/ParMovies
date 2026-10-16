@@ -14,12 +14,69 @@ from ..api.models import MediaVariant, SubtitleTrack
 
 @dataclass
 class HlsMaster:
-    """Contenido interpretado de un manifiesto HLS."""
+    """Contenido interpretado de un manifiesto HLS maestro."""
 
     variants: list[MediaVariant] = field(default_factory=list)
     audio_renditions: list[MediaVariant] = field(default_factory=list)
     subtitle_renditions: list[SubtitleTrack] = field(default_factory=list)
     is_master: bool = True
+
+
+@dataclass
+class HlsSegment:
+    """Segmento de un manifiesto de medios HLS."""
+
+    url: str
+    duration: float = 0.0
+
+
+@dataclass
+class HlsMediaPlaylist:
+    """Manifiesto de medios HLS (lista de segmentos)."""
+
+    segments: list[HlsSegment] = field(default_factory=list)
+    init_uri: str = ""
+    duration: float = 0.0
+    encrypted: bool = False
+    encryption_method: str = ""
+    is_live: bool = False
+
+
+def parse_media_playlist(text: str, base_url: str = "") -> HlsMediaPlaylist:
+    """Interpreta un manifiesto de medios HLS (lista de segmentos)."""
+
+    playlist = HlsMediaPlaylist()
+    pending_duration = 0.0
+    for line in text.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#EXTINF:"):
+            value = line[len("#EXTINF:") :].split(",")[0].strip()
+            try:
+                pending_duration = float(value)
+            except ValueError:
+                pending_duration = 0.0
+        elif line.startswith("#EXT-X-KEY:"):
+            attrs = _parse_attributes(line[len("#EXT-X-KEY:") :])
+            method = attrs.get("METHOD", "").upper()
+            if method and method != "NONE":
+                playlist.encrypted = True
+                playlist.encryption_method = method
+        elif line.startswith("#EXT-X-MAP:"):
+            attrs = _parse_attributes(line[len("#EXT-X-MAP:") :])
+            uri = attrs.get("URI", "")
+            if uri:
+                playlist.init_uri = urljoin(base_url, uri)
+        elif line.startswith("#EXT-X-ENDLIST"):
+            playlist.is_live = False
+        elif not line.startswith("#"):
+            playlist.segments.append(
+                HlsSegment(url=urljoin(base_url, line), duration=pending_duration)
+            )
+            playlist.duration += pending_duration
+            pending_duration = 0.0
+    return playlist
 
 
 def _parse_attributes(line: str) -> dict[str, str]:

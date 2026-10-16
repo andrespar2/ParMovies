@@ -72,8 +72,13 @@ class HlsDownloader:
         *,
         temp_dir: Path,
         total_duration_hint: float | None = None,
+        max_segments: int | None = None,
     ) -> DownloadResult:
-        """Descarga el manifiesto y escribe el archivo resultante."""
+        """Descarga el manifiesto y escribe el archivo resultante.
+
+        ``max_segments`` permite limitar la cantidad de segmentos (por ejemplo,
+        para verificar el funcionamiento con un fragmento).
+        """
 
         destination.parent.mkdir(parents=True, exist_ok=True)
         cache_dir = temp_dir / hashlib.sha1(media_url.encode("utf-8")).hexdigest()[:16]
@@ -111,14 +116,18 @@ class HlsDownloader:
             if playlist.init_uri:
                 self._fetch_segment(client, playlist.init_uri, cache_dir / "init.seg")
 
-            for index, segment in enumerate(playlist.segments):
+            segments = playlist.segments
+            if max_segments is not None:
+                segments = segments[: max(0, max_segments)]
+
+            for index, segment in enumerate(segments):
                 self._check_cancel()
                 target = cache_dir / f"seg_{index:06d}.seg"
                 if self.resume and target.is_file() and target.stat().st_size > 0:
                     downloaded_bytes += target.stat().st_size
                     downloaded_duration += segment.duration
                     self._emit_progress(
-                        downloaded_bytes, downloaded_duration, total_duration, start, index, len(playlist.segments)
+                        downloaded_bytes, downloaded_duration, total_duration, start, index, len(segments)
                     )
                     continue
 
@@ -126,7 +135,7 @@ class HlsDownloader:
                 downloaded_bytes += target.stat().st_size
                 downloaded_duration += segment.duration
                 self._emit_progress(
-                    downloaded_bytes, downloaded_duration, total_duration, start, index, len(playlist.segments)
+                    downloaded_bytes, downloaded_duration, total_duration, start, index, len(segments)
                 )
                 if self.speed_limit_bps:
                     self._throttle(downloaded_bytes, start)

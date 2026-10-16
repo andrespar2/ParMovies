@@ -1,0 +1,25 @@
+{
+  "api_key": "",
+  "view_key": "",
+  "base_url": "https://vimeus.com",
+  "downloads_dir": "",
+  "preferred_quality": "best",
+  "preferred_audio_language": "es-419",
+  "subtitle_mode": "spanish",
+  "output_format": "mkv",
+  "download_all_audio": false,
+  "download_metadata": true,
+  "download_posters": true,
+  "retries": 3,
+  "concurrent_downloads": 1,
+  "speed_limit_kib": 0,
+  "keep_temp_files": false,
+  "enable_logs": true,
+  "ffmpeg_path": "",
+  "trusted_domains": [
+    "vimeus.com",
+    "www.vimeus.com",
+    "vimeos.net",
+    "www.vimeos.net"
+  ]
+}

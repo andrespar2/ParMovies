@@ -1,0 +1,61 @@
+# ---------------------------------------------------------------------------
+# ParMovies - Archivos excluidos del control de versiones
+# ---------------------------------------------------------------------------
+
+# Credenciales y configuracion local (NUNCA versionar)
+config/config.json
+config/*.local.json
+*.local.json
+config.local.json
+secrets.json
+.env
+.env.*
+
+# Descargas y archivos temporales
+Descargas/
+downloads/
+*.part
+*.part.*
+*.ytdl
+*.tmp
+temp/
+tmp/
+
+# Registros
+logs/
+*.log
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+htmlcov/
+.coverage
+.coverage.*
+.tox/
+
+# Binarios de terceros (no se versionan; se incluyen en el ZIP portable)
+bin/*.exe
+bin/*.dll
+
+# Empaquetado / salidas de compilacion
+release/
+*.zip
+
+# Editores y sistema operativo
+.vscode/
+.idea/
+*.swp
+Thumbs.db
+Desktop.ini
+desktop.ini

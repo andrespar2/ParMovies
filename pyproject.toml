@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "parmovies"
+version = "1.0.0"
+description = "Descargador multimedia portable para Windows con interfaz Black Modern AMOLED"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "andrespar2" },
+    { name = "doc_osomanuel" },
+]
+keywords = ["vimeus", "descargador", "multimedia", "windows", "cli", "hls"]
+classifiers = [
+    "Environment :: Console",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Topic :: Multimedia :: Video",
+]
+
+dependencies = [
+    "rich>=13.0",
+    "httpx>=0.27",
+]
+
+[project.optional-dependencies]
+download = ["yt-dlp>=2024.0"]
+build = ["pyinstaller>=6.0"]
+test = ["pytest>=7.0"]
+
+[project.scripts]
+parmovies = "parmovies.cli.app:main"
+
+[project.urls]
+Repository = "https://github.com/andrespar2/ParMovies"
+
+[tool.setuptools]
+package-dir = { "" = "src" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+addopts = "-q"

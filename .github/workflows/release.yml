@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (por ejemplo 1.0.0)"
+        required: true
+        default: "1.0.0"
+
+permissions:
+  contents: write
+
+jobs:
+  portable:
+    name: Paquete portable y release
+    runs-on: windows-latest
+
+    steps:
+      - name: Descargar el repositorio
+        uses: actions/checkout@v4
+
+      - name: Preparar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e ".[test,build]"
+
+      - name: Ejecutar la suite de pruebas
+        env:
+          PYTHONPATH: src
+          PYTHONUTF8: "1"
+        run: python -X utf8 -m pytest
+
+      - name: Descargar FFmpeg y FFprobe
+        shell: pwsh
+        run: |
+          $url = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+          Invoke-WebRequest -Uri $url -OutFile "$env:RUNNER_TEMP\ffmpeg.zip"
+          Expand-Archive "$env:RUNNER_TEMP\ffmpeg.zip" -DestinationPath "$env:RUNNER_TEMP\ffmpeg"
+          New-Item -ItemType Directory -Path "bin" -Force | Out-Null
+          $ffmpeg = Get-ChildItem "$env:RUNNER_TEMP\ffmpeg" -Recurse -Filter ffmpeg.exe  | Select-Object -First 1
+          $ffprobe = Get-ChildItem "$env:RUNNER_TEMP\ffmpeg" -Recurse -Filter ffprobe.exe | Select-Object -First 1
+          Copy-Item $ffmpeg.FullName "bin\ffmpeg.exe"
+          Copy-Item $ffprobe.FullName "bin\ffprobe.exe"
+
+      - name: Determinar la version
+        id: version
+        shell: pwsh
+        run: |
+          if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            $v = "${{ github.event.inputs.version }}"
+          } else {
+            $v = "${{ github.ref_name }}".TrimStart("v")
+          }
+          "version=$v" >> $env:GITHUB_OUTPUT
+          Write-Host "Version: $v"
+
+      - name: Construir el paquete portable
+        shell: pwsh
+        run: ./packaging/build_portable.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Publicar la release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: ParMovies v${{ steps.version.outputs.version }}
+          body_path: CHANGELOG.md
+          files: release/ParMovies-v${{ steps.version.outputs.version }}-portable.zip
+          draft: false
+          prerelease: false
